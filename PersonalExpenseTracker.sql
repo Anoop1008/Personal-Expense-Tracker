@@ -1,8 +1,6 @@
-
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
-
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -91,60 +89,88 @@ CREATE TABLE `users` (
   `firstname` varchar(50) NOT NULL,
   `lastname` varchar(25) NOT NULL,
   `email` varchar(50) NOT NULL,
-  `password` varchar(50) NOT NULL
+  `password` varchar(50) NOT NULL,
+  `salary` int(11) NOT NULL DEFAULT 0  -- Added salary field
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`user_id`, `firstname`, `lastname`, `email`, `password`) VALUES
-(9, 'Anjalita', 'Fernandes', 'anjalita@sjec.in', 'b7161ae9080c2604adb157463312ed47'),
-(12, 'Ebey', 'Joe Regi', 'ejr@sjec.in', '25d55ad283aa400af464c76d713c07ad');
+INSERT INTO `users` (`user_id`, `firstname`, `lastname`, `email`, `password`, `salary`) VALUES
+(9, 'Anjalita', 'Fernandes', 'anjalita@sjec.in', 'b7161ae9080c2604adb157463312ed47', 500),
+(12, 'Ebey', 'Joe Regi', 'ejr@sjec.in', '25d55ad283aa400af464c76d713c07ad', 300);
 
---
--- Indexes for dumped tables
---
+-- --------------------------------------------------------
 
---
--- Indexes for table `expenses`
---
+-- Indexes for tables
+
 ALTER TABLE `expenses`
   ADD PRIMARY KEY (`expense_id`);
 
---
--- Indexes for table `expense_categories`
---
 ALTER TABLE `expense_categories`
   ADD PRIMARY KEY (`category_id`);
 
---
--- Indexes for table `users`
---
 ALTER TABLE `users`
   ADD PRIMARY KEY (`user_id`);
 
---
--- AUTO_INCREMENT for dumped tables
---
+-- AUTO_INCREMENT for tables
 
---
--- AUTO_INCREMENT for table `expenses`
---
 ALTER TABLE `expenses`
   MODIFY `expense_id` int(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=123;
 
---
--- AUTO_INCREMENT for table `expense_categories`
---
 ALTER TABLE `expense_categories`
   MODIFY `category_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
---
--- AUTO_INCREMENT for table `users`
---
 ALTER TABLE `users`
   MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+
+-- --------------------------------------------------------
+
+-- Trigger to check salary after an expense
+
+DELIMITER $$
+
+CREATE TRIGGER check_salary_after_expense 
+AFTER INSERT ON expenses
+FOR EACH ROW
+BEGIN
+  DECLARE user_salary INT;
+  DECLARE threshold INT DEFAULT 1000;  -- Example threshold
+  
+  -- Get the user's current salary
+  SELECT salary INTO user_salary
+  FROM users
+  WHERE user_id = NEW.user_id;
+  
+  -- Check if the salary is below the threshold
+  IF user_salary < threshold THEN
+    -- Notify user by sending email (this logic is handled in the application)
+    CALL notify_user_email(NEW.user_id);
+  END IF;
+END$$
+
+DELIMITER ;
+
+-- Stored Procedure for email notification
+
+DELIMITER $$
+
+CREATE PROCEDURE notify_user_email(IN user_id INT)
+BEGIN
+  DECLARE user_email VARCHAR(50);
+  
+  -- Get user's email
+  SELECT email INTO user_email
+  FROM users
+  WHERE user_id = user_id;
+  
+  -- Email sending logic is handled in the backend application
+  -- Example: send an email notification (handled outside MySQL)
+END$$
+
+DELIMITER ;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
